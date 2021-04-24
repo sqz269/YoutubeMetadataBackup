@@ -90,7 +90,7 @@ export default {
                     else
                     {
                         that.lastApiResp = response;
-                        that.statusMessage = `Retrieved.`;
+                        that.statusMessage = `Completed.`;
                         that.processing = false;
                         that.showDetailsBtn = true;
                         that.showDetailsModal = true;

@@ -15,13 +15,18 @@ export class GoogleAPIHandler
     private constructor()
     {
         this.apiKey = Utils.GetCookie("apiKey") || "";
-        this.clientId = Utils.GetCookie("apiKey") || "";
+        this.clientId = Utils.GetCookie("clientId") || "";
     }
 
     public setAPIKey(key: string)
     {
         this.isYoutubeDataAPIReady = false;
         this.apiKey = key;
+    }
+
+    public getAPIKey()
+    {
+        return this.apiKey;
     }
 
     public setClientId(id: string)
@@ -94,8 +99,8 @@ export class GoogleAPIHandler
             function (reason)
             {
                 that.isYoutubeDataAPIReady = false;
-                callback(false, "Failed to load Youtube API");
                 console.error(`Failed to load API, Reason: ${reason.error.message}`);
+                callback(true, reason.error.message);
             }
         );
     }

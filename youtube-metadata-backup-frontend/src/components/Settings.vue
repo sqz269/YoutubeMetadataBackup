@@ -5,15 +5,11 @@
         <div class="row">
             <div class="col-12 mb-4">
                 <label for="apiKey" class="form-label lead">Youtube Data API Key</label>
-                <input id="apiKey" type="text" class="form-control" placeholder="API Key">
-            </div>
-            <div class="col-12 mb-3">
-                <label for="clientId" class="form-label lead">Client ID</label>
-                <input id="clientId" type="text" class="form-control" placeholder="Client ID">
+                <input v-model="apiKey" id="apiKey" type="text" class="form-control" placeholder="API Key">
             </div>
             <hr class="my-4">
             <div class="col-12">
-                <button class="btn btn-outline-secondary w-100" type="button">Apply</button>
+                <button @click="this.onSettingsUpdated" class="btn btn-outline-secondary w-100" type="button">Apply</button>
             </div>
         </div>
     </main>
@@ -21,6 +17,22 @@
 
 <script>
 export default {
-    name: "Settings"
+    name: "Settings",
+    props: {
+        initialApiKey: String
+    },
+    data: function () {
+        return {
+            apiKey: this.initialApiKey
+        }
+    },
+    methods: {
+        onSettingsUpdated : function () {
+            let settings = {
+                "youtubeApiKey": this.apiKey
+            };
+            this.$emit("settingsChanged", settings);
+        }
+    }
 }
 </script>
