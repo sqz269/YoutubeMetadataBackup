@@ -88,6 +88,7 @@ export default {
                 {
                     that.lastApiResp = response;
                     that.setCompleteMessage(`Retrieved ${response.response.videos.length} Items.`, true);
+                    that.showModal();
                 }
             })
         },

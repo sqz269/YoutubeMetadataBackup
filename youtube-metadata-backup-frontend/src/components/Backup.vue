@@ -135,8 +135,9 @@ export default {
                     }
                     else
                     {
-                        that.setCompleteMessage("Completed", true);
                         that.lastApiResp = response;
+                        that.setCompleteMessage("Completed", true);
+                        that.showModal();
                     }
                 })
             }, function (fetched, total) {
