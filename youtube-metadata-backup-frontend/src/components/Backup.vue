@@ -5,9 +5,9 @@
             <hr class="my-4">
             <p class="lead">Enter Playlist's URL or ID</p>
             <div class="input-group input-group-lg sharp-corners mb-3">
-                <input v-model="playlistUrl" id="backup-input" type="text" class="form-control text-input" placeholder="Playlist ID or URL">
+                <input v-model="inputId" id="backup-input" type="text" class="form-control text-input" placeholder="Playlist ID or URL">
                 <div class="input-group-append">
-                    <button @click="backupPlaylist" class="btn btn-lg btn-outline-secondary" type="button">Backup</button>
+                    <button @click="backup" class="btn btn-lg btn-outline-secondary" type="button">Backup</button>
                 </div>
             </div>
             <div id="backup-status" class="d-flex align-items-center mt-4" :class="{'d-none': !showStatus}">
@@ -15,7 +15,9 @@
                     {{ statusMessage }}
                     <a class="text-link-simple" @click="showModal" :class="{'d-none': !this.showDetailsBtn}">Details</a>
                 </p>
-                <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
+                <div class="ms-auto">
+                    <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
+                </div>
             </div>
         </main>
         <BackupResultModal v-bind:show-modal="this.showDetailsModal" v-bind:api-response="this.lastApiResp" @close="closeModal"></BackupResultModal>
@@ -35,7 +37,7 @@ export default {
     },
     data: function() {
         return {
-            playlistUrl: "",
+            inputId: "",
 
             showStatus: false,
             processing: false,
@@ -47,11 +49,40 @@ export default {
         }
     },
     methods: {
-        closeModal() {
+        closeModal: function() {
             this.showDetailsModal = false;
         },
-        showModal() {
+        showModal: function() {
             this.showDetailsModal = true;
+        },
+        backup: function ()
+        {
+            let idType = Utils.DetermineIdType(this.inputId);
+
+            switch (idType.type)
+            {
+                case Utils.IDType.Playlist:
+                    this.backupPlaylist();
+                    break;
+                case Utils.IDType.Video:
+                    this.statusMessage = "ERROR: Per Video Backup is not supported, Please Enter a Playlist/Channel ID";
+                    this.statusIsError = true;
+                    this.showStatus = true;
+                    this.processing = false;
+                    break;
+                case Utils.IDType.Empty:
+                    this.statusMessage = "ERROR: Please Enter a Playlist/Channel ID";
+                    this.statusIsError = true;
+                    this.showStatus = true;
+                    this.processing = false;
+                    break;
+                case Utils.IDType.Unknown:
+                    this.statusMessage = "ERROR: Unrecognized ID. Did you enter a channel name rather than channel ID? (Channel ID should start with 'UC')";
+                    this.statusIsError = true;
+                    this.showStatus = true;
+                    this.processing = false;
+                    break;
+            }
         },
         backupPlaylist: function () {
             let backupVideosEndpoint = {endpoint: `${window.apiEndpointDomain}/api/youtube/videos/add`, method: "POST"};
@@ -62,7 +93,7 @@ export default {
             this.statusMessage = "Please Wait ...";
             this.showDetailsBtn = false;
 
-            let playlistId = Utils.GetQueryParams(this.playlistUrl, "list") || this.playlistUrl;
+            let playlistId = Utils.GetQueryParams(this.inputId, "list") || this.inputId;
             if (!playlistId)
             {
                 this.statusMessage = "ERROR: Please Enter a playlist URL or ID";

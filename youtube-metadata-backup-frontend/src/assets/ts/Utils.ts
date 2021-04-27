@@ -23,7 +23,16 @@ export module Utils {
         document.cookie = `${name}=${value}; expires=Fri, 31 Dec 2037 23:59:59 GMT`;
     }
 
-    export function DetermineIdType(data: string): {type: (string | null), id: (string | null)}
+    export enum IDType
+    {
+        Video,
+        Playlist,
+        Channel,
+        Empty,
+        Unknown
+    }
+
+    export function DetermineIdType(data: string): {type: (IDType | null), id: (string | null)}
     {
         // There are a number of input possibilities
         // Scenario 1: User inputs nothing
@@ -45,36 +54,46 @@ export module Utils {
         //      if it does, it's probably an string of video ids, else it's a playlist id
         if (!data)
         {
-            return {type: null, id: null};
+            return {type: IDType.Empty, id: null};
         }
 
         let playlistId = Utils.GetQueryParams(data, "list");
         if (playlistId)
         {
-            return {type: "playlist", id: playlistId};
+            return {type: IDType.Playlist, id: playlistId};
         }
 
         let videoId = Utils.GetQueryParams(data, "v");
         if (videoId)
         {
-            return {type: "video", id: videoId};
+            return {type: IDType.Video, id: videoId};
         }
 
         // Youtube video's ID is 11 characters
         if (data.length === 11)
         {
-            return {type: "video", id: data};
+            return {type: IDType.Video, id: data};
         }
-        else
+
+        // Playlist ID start with PL
+        // Channel ID start with UC
+        let typeId = data.substr(0, 2);
+
+        if (data.split(",")[0].length === 11)
         {
-            if (data.split(",")[0].length === 11)
-            {
-                return {type: "video", id: data};
-            }
-            else
-            {
-                return {type: "playlist", id: data};
-            }
+            return {type: IDType.Video, id: data};
         }
+
+        if (typeId === 'PL')
+        {
+            return {type: IDType.Playlist, id: data};
+        }
+
+        if (typeId === "UC")
+        {
+            return {type: IDType.Channel, id: data};
+        }
+
+        return {type: IDType.Unknown, id: null};
     }
 }

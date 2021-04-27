@@ -15,7 +15,9 @@
                     {{ statusMessage }}
                     <a class="text-link-simple" @click="showModal" :class="{'d-none': !this.showDetailsBtn}">View</a>
                 </p>
-                <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
+                <div class="ms-auto">
+                    <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
+                </div>
             </div>
         </main>
         <SearchResultModal v-bind:show-modal="this.showDetailsModal" v-bind:api-response="this.lastApiResp" @close="closeModal"></SearchResultModal>
