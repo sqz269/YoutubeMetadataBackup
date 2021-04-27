@@ -11,7 +11,7 @@ Please use the README.md files in Frontend and Backend directories for specific 
 
 [Frontend](youtube-metadata-backup-frontend/README.md) Instructions
  
-[Backend](youtube-metadata-backup-frontend/README.md) Instructions
+[Backend](YoutubeMetadataBackup-backend/README.md) Instructions
 
 ## Inspiration
 Because Youtube Nuked a channel for copyright and half of my playlist is gone. :(
