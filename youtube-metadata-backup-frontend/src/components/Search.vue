@@ -49,44 +49,55 @@ export default {
         }
     },
     methods: {
+        setErrorStatus: function (errorMessage)
+        {
+            this.statusMessage = errorMessage;
+            this.statusIsError = true;
+            this.showStatus = true;
+            this.processing = false;
+            this.showDetailsBtn = false;
+        },
+        setCompleteMessage: function (message, showDetails=true)
+        {
+            this.statusMessage = message;
+            this.statusIsError = false;
+            this.showStatus = true;
+            this.processing = false;
+            this.showDetailsBtn = showDetails;
+        },
+        setProcessingStatus: function (message)
+        {
+            this.statusMessage = message;
+            this.statusIsError = false;
+            this.showStatus = true;
+            this.processing = true;
+            this.showDetailsBtn = false;
+        },
         _searchVideo: function (videoIds) {
             let searchVideo = {endpoint: `${window.apiEndpointDomain}/api/youtube/videos/get`, method: "POST"};
 
-            this.statusMessage = "Please wait warmly while the server is processing our request";
-            this.processing = true;
+            this.setProcessingStatus("Please wait warmly while the server is processing our request");
 
             let that = this;
             MetadataBackup.RetrieveListOfVideos(searchVideo.endpoint, videoIds, function (response) {
                 if (response.error)
                 {
-                    that.statusMessage = response.errorMessage;
-                    that.statusIsError = true;
-                    that.processing = false;
+                    that.setErrorStatus(response.errorMessage);
                 }
                 else
                 {
                     that.lastApiResp = response;
-                    that.statusMessage = `Retrieved ${response.response.videos.length} Items.`;
-                    that.processing = false;
-                    that.showDetailsBtn = true;
-                    that.showDetailsModal = true;
+                    that.setCompleteMessage(`Retrieved ${response.response.videos.length} Items.`, true);
                 }
             })
         },
         searchVideo: function () {
-
-            this.showStatus = true;
-            this.processing = true;
-            this.statusIsError = false;
-            this.statusMessage = "Please Wait ...";
-            this.showDetailsBtn = false;
+            this.setProcessingStatus("Please Wait ...");
 
             let data = Utils.DetermineIdType(this.targetData);
             if (data.type === null)
             {
-                this.statusMessage = "ERROR: Please Enter a Playlist/Video URL or ID";
-                this.statusIsError = true;
-                this.processing = false;
+                this.setErrorStatus("ERROR: Please Enter a Playlist/Video URL or ID");
                 return;
             }
 
@@ -96,9 +107,7 @@ export default {
                 YoutubeDataAPIHandler.FetchPlaylistItems(data.id, function (error, reason, items) {
                     if (error)
                     {
-                        that.statusMessage = `ERROR Fetching Playlist: ${reason}`;
-                        that.statusIsError = true;
-                        that.processing = false;
+                        that.setErrorStatus(`ERROR Fetching Playlist: ${reason}`);
                         return;
                     }
 
@@ -111,7 +120,7 @@ export default {
                     });
                     that._searchVideo(videosDeleted);
                 }, function (fetched, total) {
-                    that.statusMessage = `Fetching Playlist Items. (${fetched}/${total})`;
+                    that.setProcessingStatus(`Fetching Playlist Items. (${fetched}/${total})`)
                 });
             }
             else

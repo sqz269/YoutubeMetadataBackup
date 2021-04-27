@@ -55,6 +55,30 @@ export default {
         showModal: function() {
             this.showDetailsModal = true;
         },
+        setErrorStatus: function (errorMessage)
+        {
+            this.statusMessage = errorMessage;
+            this.statusIsError = true;
+            this.showStatus = true;
+            this.processing = false;
+            this.showDetailsBtn = false;
+        },
+        setCompleteMessage: function (message, showDetails=true)
+        {
+            this.statusMessage = message;
+            this.statusIsError = false;
+            this.showStatus = true;
+            this.processing = false;
+            this.showDetailsBtn = showDetails;
+        },
+        setProcessingStatus: function (message)
+        {
+            this.statusMessage = message;
+            this.statusIsError = false;
+            this.showStatus = true;
+            this.processing = true;
+            this.showDetailsBtn = false;
+        },
         backup: function ()
         {
             let idType = Utils.DetermineIdType(this.inputId);
@@ -68,39 +92,24 @@ export default {
                     this.backupChannel(idType.id);
                     break;
                 case Utils.IDType.Video:
-                    this.statusMessage = "ERROR: Per Video Backup is not supported, Please Enter a Playlist/Channel ID";
-                    this.statusIsError = true;
-                    this.showStatus = true;
-                    this.processing = false;
+                    this.setErrorStatus("ERROR: Per Video Backup is not supported, Please Enter a Playlist/Channel ID")
                     break;
                 case Utils.IDType.Empty:
-                    this.statusMessage = "ERROR: Please Enter a Playlist/Channel ID";
-                    this.statusIsError = true;
-                    this.showStatus = true;
-                    this.processing = false;
+                    this.setErrorStatus("ERROR: Please Enter a Playlist/Channel ID")
                     break;
                 case Utils.IDType.Unknown:
-                    this.statusMessage = "ERROR: Unrecognized ID. Did you enter a channel name rather than channel ID? (Channel ID should start with 'UC')";
-                    this.statusIsError = true;
-                    this.showStatus = true;
-                    this.processing = false;
+                    this.setErrorStatus("ERROR: Unrecognized ID. Did you enter a channel name rather than channel ID? (Channel ID should start with 'UC')")
                     break;
             }
         },
         backupPlaylist: function (playlistId) {
             let backupVideosEndpoint = {endpoint: `${window.apiEndpointDomain}/api/youtube/videos/add`, method: "POST"};
 
-            this.showStatus = true;
-            this.processing = true;
-            this.statusIsError = false;
-            this.statusMessage = "Please Wait ...";
-            this.showDetailsBtn = false;
+            this.setProcessingStatus("Please Wait ...")
 
             if (!playlistId)
             {
-                this.statusMessage = "ERROR: Please Enter a playlist URL or ID";
-                this.statusIsError = true;
-                this.processing = false;
+                this.setErrorStatus("ERROR: Please Enter a playlist URL or ID")
                 return;
             }
 
@@ -108,9 +117,7 @@ export default {
             YoutubeDataAPIHandler.FetchPlaylistItems(playlistId, function (error, reason, items) {
                 if (error)
                 {
-                    that.statusMessage = `ERROR Fetching Playlist: ${reason}`;
-                    that.statusIsError = true;
-                    that.processing = false;
+                    that.setErrorStatus(`ERROR Fetching Playlist: ${reason}`);
                     return;
                 }
 
@@ -119,26 +126,21 @@ export default {
                     videoIds.push(e.snippet.resourceId.videoId);
                 })
 
-                that.statusMessage = "Please wait warmly while the server is processing our request";
-                that.processing = true;
+                that.setProcessingStatus("Please wait warmly while the server is processing our request");
+
                 MetadataBackup.BackupVideos(backupVideosEndpoint.endpoint, videoIds, function (response) {
                     if (response.error)
                     {
-                        that.statusMessage = `ERROR: ${response.errorMessage}`;
-                        that.statusIsError = true;
-                        that.processing = false;
+                        that.setErrorStatus(`ERROR: ${response.errorMessage}`);
                     }
                     else
                     {
+                        that.setCompleteMessage("Completed", true);
                         that.lastApiResp = response;
-                        that.statusMessage = `Completed.`;
-                        that.processing = false;
-                        that.showDetailsBtn = true;
-                        that.showDetailsModal = true;
                     }
                 })
             }, function (fetched, total) {
-                that.statusMessage = `Fetching Playlist Items. (${fetched}/${total})`;
+                that.setProcessingStatus(`Fetching Playlist Items. (${fetched}/${total})`);
             });
         },
         backupChannel: function (channelId)
@@ -147,9 +149,7 @@ export default {
             YoutubeDataAPIHandler.GetChannelUploadPlaylist(channelId, function (error, reason, data) {
                 if (error)
                 {
-                    that.statusMessage = `ERROR Getting Channel: ${reason}`;
-                    that.statusIsError = true;
-                    that.processing = false;
+                    that.setErrorStatus(`ERROR Getting Channel: ${reason}`)
                     return;
                 }
 
