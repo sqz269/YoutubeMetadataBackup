@@ -11,7 +11,9 @@ export module YoutubeDataAPIHandler {
     }
 
     export function FetchPlaylistItems(playlistId: string,
-                                       callback: (items: gapi.client.youtube.PlaylistItem[]) => any,
+                                       callback: (error: boolean,
+                                                  errorReason: string,
+                                                  items: gapi.client.youtube.PlaylistItem[]) => any,
                                        iterCallback?: (fetched: number, total: number) => any,
                                        fetchedItems: gapi.client.youtube.PlaylistItem[]=[],
                                        pageId: (string | undefined)=undefined): void
@@ -41,13 +43,40 @@ export module YoutubeDataAPIHandler {
                 }
                 else
                 {
-                    callback(fetchedItems);
+                    callback(false, "Success", fetchedItems);
                 }
             },
             function(err)
             {
-                console.error(`Error fetching playlist: ${err.result.error.message}`);
+                callback(true, err.result.error.message, fetchedItems);
             }
         )
+    }
+
+    // Youtube API Also allows us to get the upload playlist by usernames
+    // but for now, we'll only accept channel id
+    export function GetChannelUploadPlaylist(channelId: string,
+                                             callback: (error: boolean,
+                                                        errorReason: string,
+                                                        data: (string | undefined)) => any)
+    {
+        gapi.client.youtube.channels.list({
+            "part": ["snippet,contentDetails,statistics"],
+            "id": [channelId]
+        }).then(
+            function(response) {
+                // Handle the results here (response.result has the parsed body).
+                console.log("Response", response);
+
+                // @ts-ignore
+                let playlistId = response.result.items[0].contentDetails.relatedPlaylists.uploads;
+
+                callback(false, "Success", playlistId);
+            },
+            function(err) {
+                console.error("Error", err);
+                callback(true, err.result.error.message, undefined);
+            }
+        );
     }
 }

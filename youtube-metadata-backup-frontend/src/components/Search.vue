@@ -90,10 +90,18 @@ export default {
                 return;
             }
 
-            if (data.type === "playlist")
+            if (data.type === Utils.IDType.Playlist)
             {
                 const that = this;
-                YoutubeDataAPIHandler.FetchPlaylistItems(data.id, function (items) {
+                YoutubeDataAPIHandler.FetchPlaylistItems(data.id, function (error, reason, items) {
+                    if (error)
+                    {
+                        that.statusMessage = `ERROR Fetching Playlist: ${reason}`;
+                        that.statusIsError = true;
+                        that.processing = false;
+                        return;
+                    }
+
                     let videosDeleted = [];
                     items.forEach(function (e) {
                         if (e.snippet.description === "This video is unavailable.")

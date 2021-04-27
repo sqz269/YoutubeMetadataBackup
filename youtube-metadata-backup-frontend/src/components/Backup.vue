@@ -62,7 +62,10 @@ export default {
             switch (idType.type)
             {
                 case Utils.IDType.Playlist:
-                    this.backupPlaylist();
+                    this.backupPlaylist(idType.id);
+                    break;
+                case Utils.IDType.Channel:
+                    this.backupChannel(idType.id);
                     break;
                 case Utils.IDType.Video:
                     this.statusMessage = "ERROR: Per Video Backup is not supported, Please Enter a Playlist/Channel ID";
@@ -84,7 +87,7 @@ export default {
                     break;
             }
         },
-        backupPlaylist: function () {
+        backupPlaylist: function (playlistId) {
             let backupVideosEndpoint = {endpoint: `${window.apiEndpointDomain}/api/youtube/videos/add`, method: "POST"};
 
             this.showStatus = true;
@@ -93,7 +96,6 @@ export default {
             this.statusMessage = "Please Wait ...";
             this.showDetailsBtn = false;
 
-            let playlistId = Utils.GetQueryParams(this.inputId, "list") || this.inputId;
             if (!playlistId)
             {
                 this.statusMessage = "ERROR: Please Enter a playlist URL or ID";
@@ -103,7 +105,15 @@ export default {
             }
 
             const that = this;
-            YoutubeDataAPIHandler.FetchPlaylistItems(playlistId, function (items) {
+            YoutubeDataAPIHandler.FetchPlaylistItems(playlistId, function (error, reason, items) {
+                if (error)
+                {
+                    that.statusMessage = `ERROR Fetching Playlist: ${reason}`;
+                    that.statusIsError = true;
+                    that.processing = false;
+                    return;
+                }
+
                 let videoIds = [];
                 items.forEach(e => {
                     videoIds.push(e.snippet.resourceId.videoId);
@@ -114,7 +124,7 @@ export default {
                 MetadataBackup.BackupVideos(backupVideosEndpoint.endpoint, videoIds, function (response) {
                     if (response.error)
                     {
-                        that.statusMessage = response.errorMessage;
+                        that.statusMessage = `ERROR: ${response.errorMessage}`;
                         that.statusIsError = true;
                         that.processing = false;
                     }
@@ -129,6 +139,21 @@ export default {
                 })
             }, function (fetched, total) {
                 that.statusMessage = `Fetching Playlist Items. (${fetched}/${total})`;
+            });
+        },
+        backupChannel: function (channelId)
+        {
+            let that = this;
+            YoutubeDataAPIHandler.GetChannelUploadPlaylist(channelId, function (error, reason, data) {
+                if (error)
+                {
+                    that.statusMessage = `ERROR Getting Channel: ${reason}`;
+                    that.statusIsError = true;
+                    that.processing = false;
+                    return;
+                }
+
+                that.backupPlaylist(data);
             });
         }
     }
