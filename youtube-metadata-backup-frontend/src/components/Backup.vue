@@ -3,9 +3,9 @@
         <main id="view-backup" class="px-3 mb-a-lot">
             <h3>Backup Playlist</h3>
             <hr class="my-4">
-            <p class="lead">Enter Playlist's URL or ID</p>
+            <p class="lead">Enter Playlist/Channel ID</p>
             <div class="input-group input-group-lg sharp-corners mb-3">
-                <input v-model="inputId" id="backup-input" type="text" class="form-control text-input" placeholder="Playlist ID or URL">
+                <input v-model="inputId" id="backup-input" type="text" class="form-control text-input" placeholder="Playlist/Channel ID">
                 <div class="input-group-append">
                     <button @click="backup" class="btn btn-lg btn-outline-secondary" type="button">Backup</button>
                 </div>
