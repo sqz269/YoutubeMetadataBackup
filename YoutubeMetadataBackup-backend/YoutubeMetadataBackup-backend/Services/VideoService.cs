@@ -31,6 +31,11 @@ namespace YoutubeMetadataBackup_backend.Services
             return _videos.Find(video => true).Skip(start).Limit(limit).ToList();
         }
 
+        public List<Video> Get(FilterDefinition<Video> filter, int start, int limit)
+        {
+            return _videos.Find(filter).Skip(start).Limit(limit).ToList();
+        }
+
         public void Create(Video video)
         {
             _videos.InsertOne(video);

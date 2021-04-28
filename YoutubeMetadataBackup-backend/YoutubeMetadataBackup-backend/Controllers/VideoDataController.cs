@@ -1,12 +1,15 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Security;
+using System.Text.RegularExpressions;
 using Google.Apis.YouTube.v3.Data;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using YoutubeMetadataBackup_backend.Models.api;
 using YoutubeMetadataBackup_backend.Models.database;
@@ -16,6 +19,65 @@ using Video = YoutubeMetadataBackup_backend.Models.api.Video;
 
 namespace YoutubeMetadataBackup_backend.Controllers
 {
+    public class MetadataDatabaseQuery
+    {
+        public FilterDefinition<Video> QueryFilterDefinition;
+
+        public int Limit;
+        public int Start;
+    }
+
+    public class MetadataUserQuery
+    {
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public string? UploaderId { get; set; }
+        public string? Uploader { get; set; }
+        public long? StartTime { get; set; }
+        public long? EndTime { get; set; }
+        public int? Limit { get; set; }
+        public int? Start { get; set; }
+
+        public MetadataDatabaseQuery BuildDatabaseQuery()
+        {
+            var filter = Builders<Video>.Filter;
+
+            int limit = 20;
+            if (Limit != null)
+                limit = (int) Limit;
+
+            int start = 0;
+            if (Start != null)
+                start = (int) Start;
+
+            FilterDefinition<Video> query = FilterDefinition<Video>.Empty;
+            if (Title != null)
+                query &= filter.Regex(nameof(Video.Title), new BsonRegularExpression(Title, "i"));
+
+            if (Description != null)
+                query &= filter.Regex(nameof(Video.Description), new BsonRegularExpression(Description, "i"));
+
+            if (Uploader != null)
+                query &= filter.Regex(nameof(Video.Uploader), new BsonRegularExpression(Uploader, "i"));
+
+            if (UploaderId != null)
+                query &= filter.Eq(nameof(Video.UploaderId), UploaderId);
+
+            if (StartTime != null)
+                query &= filter.Gt(nameof(Video.Published), StartTime);
+
+            if (EndTime != null)
+                query &= filter.Lt(nameof(Video.Published), EndTime);
+
+            return new MetadataDatabaseQuery()
+            {
+                Limit = limit,
+                Start = start,
+                QueryFilterDefinition = query
+            };
+        }
+    }
+
     [EnableCors("AllowAll")]
     [Route("api/youtube/videos")]
     [ApiController]
@@ -56,21 +118,23 @@ namespace YoutubeMetadataBackup_backend.Controllers
         }
 
         [HttpGet("get/all")]
-        public ExecutionResult<List<Video>> Get([FromQuery]int start = 0, [FromQuery]int limit = 20)
+        public ExecutionResult<List<Video>> Get([FromQuery]MetadataUserQuery query)
         {
-            if (start < 0)
+            if (query.Start < 0)
             {
                 Response.StatusCode = 400;
                 return ExecutionResult<List<Video>>.Fail(ErrorCode.InvalidParamaters, "Query Parameter 'start' must be greater or equal to 0");
             }
 
-            if (limit < 1 || limit > 50)
+            if (query.Limit < 1 || query.Limit > 50)
             {
                 Response.StatusCode = 400;
                 return ExecutionResult<List<Video>>.Fail(ErrorCode.InvalidParamaters, "Query Parameter 'limit' must be between 1 to 50");
             }
 
-            return ExecutionResult<List<Video>>.Success(_videoService.Get(start, limit));
+            MetadataDatabaseQuery databaseQuery = query.BuildDatabaseQuery();
+
+            return ExecutionResult<List<Video>>.Success(_videoService.Get(databaseQuery.QueryFilterDefinition, databaseQuery.Start, databaseQuery.Limit));
         }
 
         [HttpPost("add")]
