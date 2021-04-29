@@ -4,23 +4,31 @@
             <h3>Search Youtube Video</h3>
             <hr class="my-4">
             <p class="lead">Enter Playlist/Video's URL or ID</p>
-            <div class="input-group input-group-lg sharp-corners mb-3">
+            <div class="input-group input-group-lg sharp-corners mb-1">
                 <input v-model="targetData" id="search-input" type="text" class="form-control text-input" placeholder="ID or URL">
                 <div class="input-group-append">
                     <button @click="searchVideo" class="btn btn-lg btn-outline-secondary" type="button">Search</button>
                 </div>
             </div>
-            <div id="backup-status" class="d-flex align-items-center mt-4" :class="{'d-none': !showStatus}">
+            <div class="row">
+                <div class="col-12">
+                    <a class="text-link-simple float-md-end" @click="showAdvancedSearchModal">
+                        Advanced Search
+                    </a>
+                </div>
+            </div>
+            <div id="backup-status" class="d-flex align-items-center mt-2" :class="{'d-none': !showStatus}">
                 <p class="lead status-message" :class="{'text-danger': this.statusIsError}">
                     {{ statusMessage }}
-                    <a class="text-link-simple" @click="showModal" :class="{'d-none': !this.showDetailsBtn}">View</a>
+                    <a class="text-link-simple" @click="showDetailsModal" :class="{'d-none': !this.showDetailsBtn}">View</a>
                 </p>
                 <div class="ms-auto">
                     <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
                 </div>
             </div>
         </main>
-        <SearchResultModal v-bind:show-modal="this.showDetailsModal" v-bind:api-response="this.lastApiResp" @close="closeModal"></SearchResultModal>
+        <SearchResultModal :show-modal="this.isDetailsModalShown" :api-response="this.lastApiResp" @close="closeDetailsModal"></SearchResultModal>
+        <AdvancedSearch :show-modal="this.isAdvancedSearchModalShown" @close="closeAdvancedSearchModal"></AdvancedSearch>
     </div>
 </template>
 
@@ -29,22 +37,27 @@ import SearchResultModal from "@/components/SearchResultModal";
 import {Utils} from "@/assets/ts/Utils";
 import {YoutubeDataAPIHandler} from "@/assets/ts/YoutubeDataAPIHandler";
 import {MetadataBackup} from "@/assets/ts/MetadataBackup";
+import AdvancedSearch from "@/components/AdvancedSearch";
 
 export default {
     name: "Search",
     components: {
+        AdvancedSearch,
         SearchResultModal
     },
     data: function () {
         return {
             targetData: "",
 
+            isAdvancedSearchModalShown: false,
+
             showStatus: false,
             processing: false,
             statusMessage: "",
             statusIsError: false,
             showDetailsBtn: false,
-            showDetailsModal: false,
+
+            isDetailsModalShown: false,
             lastApiResp: false
         }
     },
@@ -88,7 +101,7 @@ export default {
                 {
                     that.lastApiResp = response;
                     that.setCompleteMessage(`Retrieved ${response.response.videos.length} Items.`, true);
-                    that.showModal();
+                    that.showDetailsModal();
                 }
             })
         },
@@ -130,12 +143,16 @@ export default {
                 this._searchVideo(videoIds);
             }
         },
-        showModal: function () {
+
+        showDetailsModal: function () {
             this.showDetailsModal = true;
         },
-        closeModal: function () {
+        closeDetailsModal: function () {
             this.showDetailsModal = false;
-        }
+        },
+
+        showAdvancedSearchModal: function () { this.isAdvancedSearchModalShown = true; },
+        closeAdvancedSearchModal: function () { this.isAdvancedSearchModalShown = false; }
     }
 }
 </script>

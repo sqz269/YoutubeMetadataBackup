@@ -87,12 +87,33 @@
     margin-bottom: 14rem;
 }
 
+input[type=checkbox]
+{
+    border: 1px solid white;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none !important;
+}
+
 input[type=text] {
     border-radius: 0 !important;
     border-color: #fff;
     color: #fff;
     background-color: transparent;
     box-shadow: none !important;
+}
+
+input[type=text]:disabled
+{
+    border-radius: 0 !important;
+    border-color: gray;
+    background-color: #212529;
+    box-shadow: none !important;
+}
+
+input[type=text]:disabled::placeholder
+{
+    color: #3a3a3d;
 }
 
 input[type=text]:focus::placeholder {
@@ -105,7 +126,6 @@ input[type=text]:focus {
     background-color: transparent;
     box-shadow: white !important;
 }
-
 /*
  * Base structure
  */
