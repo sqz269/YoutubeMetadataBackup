@@ -4,7 +4,8 @@
     {
         Success,
 
-        InvalidParamaters
+        InvalidParamaters,
+        OperationTimeout
     }
 
     public class ExecutionResult<T>
@@ -14,12 +15,14 @@
         public string ErrorMessage { get; set; }
         public T Response { get; set; }
 
-        public static ExecutionResult<T> Success(T result)
+        public long Count { get; set; }
+
+        public static ExecutionResult<T> Success(T result, long resultCount)
         {
             return new ExecutionResult<T>
             {
                 Error = false, ErrorCode = ErrorCode.Success, ErrorMessage = "Operation Completed Successfully",
-                Response = result
+                Response = result, Count = resultCount
             };
         }
 
@@ -30,7 +33,8 @@
                 Error = true,
                 ErrorCode = errorCode,
                 ErrorMessage = message,
-                Response = default
+                Response = default,
+                Count = 0
             };
         }
     }

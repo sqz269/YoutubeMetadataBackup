@@ -5,6 +5,7 @@ export module MetadataBackup
         errorCode: number;
         errorMessage: string;
         response: ResultType;
+        count: number;
     }
 
     export interface VideoMetadata {

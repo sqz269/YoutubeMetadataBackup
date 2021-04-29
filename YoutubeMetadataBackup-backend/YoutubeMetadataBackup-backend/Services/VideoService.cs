@@ -4,6 +4,8 @@ using YoutubeMetadataBackup_backend.Models.api;
 using YoutubeMetadataBackup_backend.Models.database;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace YoutubeMetadataBackup_backend.Services
@@ -11,6 +13,7 @@ namespace YoutubeMetadataBackup_backend.Services
     public class VideoService
     {
         private readonly IMongoCollection<Video> _videos;
+        public readonly int QueryTimeout;
 
         public VideoService(IVideoDatabaseSettings settings)
         {
@@ -18,6 +21,7 @@ namespace YoutubeMetadataBackup_backend.Services
             var database = client.GetDatabase(settings.DatabaseName);
 
             _videos = database.GetCollection<Video>(settings.VideoCollectionsName);
+            QueryTimeout = settings.QueryTimeoutMilliseconds;
         }
 
         public List<Video> Get(string[] ids)
@@ -26,14 +30,12 @@ namespace YoutubeMetadataBackup_backend.Services
             return _videos.Find(filter).ToList();
         }
 
-        public List<Video> Get(int start, int limit)
-        {
-            return _videos.Find(video => true).Skip(start).Limit(limit).ToList();
-        }
-
         public List<Video> Get(FilterDefinition<Video> filter, int start, int limit)
         {
-            return _videos.Find(filter).Skip(start).Limit(limit).ToList();
+            using (var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(QueryTimeout)))
+            {
+                return _videos.Find(filter).Skip(start).Limit(limit).ToList(timeout.Token);
+            }
         }
 
         public void Create(Video video)

@@ -1,18 +1,13 @@
 ﻿#nullable enable
-using System;
-using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Security;
-using System.Text.RegularExpressions;
 using Google.Apis.YouTube.v3.Data;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Collections.Generic;
+using System.Linq;
 using YoutubeMetadataBackup_backend.Models.api;
-using YoutubeMetadataBackup_backend.Models.database;
 using YoutubeMetadataBackup_backend.Services;
 using YoutubeMetadataBackup_backend.YoutubeAPI;
 using Video = YoutubeMetadataBackup_backend.Models.api.Video;
@@ -114,7 +109,7 @@ namespace YoutubeMetadataBackup_backend.Controllers
             {
                 videos = videoData,
                 noRecord = missingItems
-            });
+            }, 1);
         }
 
         [HttpGet("get/all")]
@@ -134,7 +129,16 @@ namespace YoutubeMetadataBackup_backend.Controllers
 
             MetadataDatabaseQuery databaseQuery = query.BuildDatabaseQuery();
 
-            return ExecutionResult<List<Video>>.Success(_videoService.Get(databaseQuery.QueryFilterDefinition, databaseQuery.Start, databaseQuery.Limit));
+            try
+            {
+                var result = _videoService.Get(databaseQuery.QueryFilterDefinition, databaseQuery.Start,
+                    databaseQuery.Limit);
+                return ExecutionResult<List<Video>>.Success(result, result.Count);
+            }
+            catch (System.OperationCanceledException)
+            {
+                return ExecutionResult<List<Video>>.Fail(ErrorCode.OperationTimeout, $"Database Query Timeout ({_videoService.QueryTimeout}ms). Try specifying Channel ID and time range, or simplify regular expressions used in the query");
+            }
         }
 
         [HttpPost("add")]
@@ -186,7 +190,7 @@ namespace YoutubeMetadataBackup_backend.Controllers
                 AddedVideoIds = videosRetrieved,
                 FailedVideoIds = failedToRetrieve
             };
-            return ExecutionResult<AddVideoResult>.Success(result);
+            return ExecutionResult<AddVideoResult>.Success(result, 1);
         }
     }
 }
