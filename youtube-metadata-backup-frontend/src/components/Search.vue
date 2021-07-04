@@ -1,158 +1,124 @@
 <template>
-    <div>
-        <main id="view-search" class="px-3 mb-a-lot">
-            <h3>Search Youtube Video</h3>
-            <hr class="my-4">
-            <p class="lead">Enter Playlist/Video's URL or ID</p>
-            <div class="input-group input-group-lg sharp-corners mb-1">
-                <input v-model="targetData" id="search-input" type="text" class="form-control text-input" placeholder="ID or URL">
-                <div class="input-group-append">
-                    <button @click="searchVideo" class="btn btn-lg btn-outline-secondary" type="button">Search</button>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <a class="text-link-simple float-md-end" @click="showAdvancedSearchModal">
-                        Advanced Search
-                    </a>
-                </div>
-            </div>
-            <div id="backup-status" class="d-flex align-items-center mt-2" :class="{'d-none': !showStatus}">
-                <p class="lead status-message" :class="{'text-danger': this.statusIsError}">
-                    {{ statusMessage }}
-                    <a class="text-link-simple" @click="showDetailsModal" :class="{'d-none': !this.showDetailsBtn}">View</a>
-                </p>
-                <div class="ms-auto">
-                    <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
-                </div>
-            </div>
-        </main>
-        <SearchResultModal :show-modal="this.isDetailsModalShown" :api-response="this.lastApiResp" @close="closeDetailsModal"></SearchResultModal>
-        <AdvancedSearch :show-modal="this.isAdvancedSearchModalShown" @close="closeAdvancedSearchModal"></AdvancedSearch>
-    </div>
+  <div>
+
+    <main id="view-search" class="px-3 mb-a-lot">
+      <h3>Search Youtube Video</h3>
+      <hr class="my-4">
+      <p class="lead">Enter Playlist/Video's URL or ID</p>
+      <div class="input-group input-group-lg sharp-corners mb-1">
+        <input v-model="inputData" id="search-input" type="text" class="form-control text-input" placeholder="ID or URL">
+        <div class="input-group-append">
+          <button @click="this.search" class="btn btn-lg btn-outline-secondary" type="button">Search</button>
+        </div>
+      </div>
+<!--      <div class="row">-->
+<!--        <div class="col-12">-->
+<!--          <a class="text-link-simple float-md-end" @click="showAdvancedSearchModal">-->
+<!--            Advanced Search-->
+<!--          </a>-->
+<!--        </div>-->
+<!--      </div>-->
+      <StatusMessage ref="status"></StatusMessage>
+    </main>
+    <SearchResultModal ref="searchResult"></SearchResultModal>
+  </div>
 </template>
 
-<script>
-import SearchResultModal from "@/components/SearchResultModal";
-import {Utils} from "@/assets/ts/Utils";
-import {YoutubeDataAPIHandler} from "@/assets/ts/YoutubeDataAPIHandler";
+<script lang="ts">
+import {Component, Vue} from "vue-property-decorator";
+import StatusMessage from "@/components/StatusMessage.vue";
+import SearchResultModal from "@/components/SearchResultModal.vue";
 import {MetadataBackup} from "@/assets/ts/MetadataBackup";
-import AdvancedSearch from "@/components/AdvancedSearch";
+import {IdType, Utils} from "@/assets/ts/Utils";
+import {YoutubeDataAPIHandler} from "@/assets/ts/YoutubeDataAPIHandler";
+@Component({
+  components: {SearchResultModal, StatusMessage}
+})
+export default class Search extends Vue {
+  $refs!: {
+    searchResult: SearchResultModal
+    status: StatusMessage
+  }
 
-export default {
-    name: "Search",
-    components: {
-        AdvancedSearch,
-        SearchResultModal
-    },
-    data: function () {
-        return {
-            targetData: "",
+  private inputData = "";
 
-            isAdvancedSearchModalShown: false,
+  search(): void {
+    const idType = Utils.DetermineIdType(this.inputData);
+    console.log(idType);
+    switch (idType.type) {
+      case IdType.Video:
+        // the brackets for idType.id is to convert one single id to a string array
+        // because searchVideo only accepts an array of playlist IDs
+        // @ts-ignore
+        this.searchVideo([idType.id]);
+        break;
+      case IdType.VideoList:
+        // @ts-ignore
+        this.searchVideo(idType.id);
+        break;
+      case IdType.Playlist:
+        // @ts-ignore
+        this.searchPlaylist(idType.id);
+        break;
 
-            showStatus: false,
-            processing: false,
-            statusMessage: "",
-            statusIsError: false,
-            showDetailsBtn: false,
+      case IdType.Channel:
+      case IdType.Username:
+      case IdType.CustomUrl:
+        this.$refs.status.Error("Search by Channel is currently not supported. Please provide a Video/Playlist ID");
+        break;
 
-            isDetailsModalShown: false,
-            lastApiResp: false
-        }
-    },
-    methods: {
-        setErrorStatus: function (errorMessage)
-        {
-            this.statusMessage = errorMessage;
-            this.statusIsError = true;
-            this.showStatus = true;
-            this.processing = false;
-            this.showDetailsBtn = false;
-        },
-        setCompleteMessage: function (message, showDetails=true)
-        {
-            this.statusMessage = message;
-            this.statusIsError = false;
-            this.showStatus = true;
-            this.processing = false;
-            this.showDetailsBtn = showDetails;
-        },
-        setProcessingStatus: function (message)
-        {
-            this.statusMessage = message;
-            this.statusIsError = false;
-            this.showStatus = true;
-            this.processing = true;
-            this.showDetailsBtn = false;
-        },
-        _searchVideo: function (videoIds) {
-            let searchVideo = {endpoint: `${window.apiEndpointDomain}/api/youtube/videos/get`, method: "POST"};
-
-            this.setProcessingStatus("Please wait warmly while the server is processing our request");
-
-            let that = this;
-            MetadataBackup.RetrieveListOfVideos(searchVideo.endpoint, videoIds, function (response) {
-                if (response.error)
-                {
-                    that.setErrorStatus(response.errorMessage);
-                }
-                else
-                {
-                    that.lastApiResp = response;
-                    that.setCompleteMessage(`Retrieved ${response.response.videos.length} Items.`, true);
-                    that.showDetailsModal();
-                }
-            })
-        },
-        searchVideo: function () {
-            this.setProcessingStatus("Please Wait ...");
-
-            let data = Utils.DetermineIdType(this.targetData);
-            if (data.type === null)
-            {
-                this.setErrorStatus("ERROR: Please Enter a Playlist/Video URL or ID");
-                return;
-            }
-
-            if (data.type === Utils.IDType.Playlist)
-            {
-                const that = this;
-                YoutubeDataAPIHandler.FetchPlaylistItems(data.id, function (error, reason, items) {
-                    if (error)
-                    {
-                        that.setErrorStatus(`ERROR Fetching Playlist: ${reason}`);
-                        return;
-                    }
-
-                    let videosDeleted = [];
-                    items.forEach(function (e) {
-                        if (e.snippet.description === "This video is unavailable.")
-                        {
-                            videosDeleted.push(e.snippet.resourceId.videoId);
-                        }
-                    });
-                    that._searchVideo(videosDeleted);
-                }, function (fetched, total) {
-                    that.setProcessingStatus(`Fetching Playlist Items. (${fetched}/${total})`)
-                });
-            }
-            else
-            {
-                let videoIds = data.id.replace(/(^,)|(,$)|( )/g, "").replace(" ", "").split(",")
-                this._searchVideo(videoIds);
-            }
-        },
-
-        showDetailsModal: function () {
-            this.showDetailsModal = true;
-        },
-        closeDetailsModal: function () {
-            this.showDetailsModal = false;
-        },
-
-        showAdvancedSearchModal: function () { this.isAdvancedSearchModalShown = true; },
-        closeAdvancedSearchModal: function () { this.isAdvancedSearchModalShown = false; }
+      case IdType.Empty:
+      case IdType.Unknown:
+        this.$refs.status.Error("Invalid Input. Please Enter a Video or Playlist ID")
+        break;
     }
+  }
+
+  searchVideo(videoIds: string[]): void {
+    this.$refs.status.Loading("Please wait warmly while the server is processing our request")
+
+    MetadataBackup.RetrieveListOfVideos(videoIds, (response => {
+      if (response.error)
+      {
+        this.$refs.status.Error(`Error while retrieving data: ${response.errorMessage}`)
+        return;
+      }
+
+      this.$refs.status.Details("Data Retrieved.", () => {
+        this.$refs.searchResult.showModal();
+      })
+      this.$refs.searchResult.Response = response;
+      this.$refs.searchResult.showModal();
+    }))
+  }
+
+  searchPlaylist(playlistId: string): void {
+    this.$refs.status.Loading(`Retrieving Playlist Data`);
+
+    YoutubeDataAPIHandler.FetchPlaylistItems(playlistId,
+    ((error, errorReason, items) => {
+      if (error)
+      {
+        this.$refs.status.Error(`Error while Fetching Playlist: ${errorReason}`);
+        return;
+      }
+
+      const videoIds: string[] = [];
+      items.forEach(e => {
+        // Only try to retrieve deleted videos
+        if (e.snippet?.description === "This video is unavailable.")
+        {
+          let videoId = e.snippet?.resourceId?.videoId;
+          if (videoId)
+            videoIds.push(videoId);
+        }
+      });
+
+      this.searchVideo(videoIds);
+    }),
+    ((fetched, total) => {
+      this.$refs.status.Loading(`Fetching Playlist Items: ${fetched}/${total}`);
+    }))
+  }
 }
 </script>

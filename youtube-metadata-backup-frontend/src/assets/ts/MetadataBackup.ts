@@ -1,5 +1,8 @@
-export module MetadataBackup
-{
+import ExecutionResult = MetadataBackup.Response.ExecutionResult;
+import VideoAddResult = MetadataBackup.Response.VideoAddResult;
+import VideoListResult = MetadataBackup.Response.VideoListResult;
+
+export namespace MetadataBackup.Response {
     export interface ExecutionResult<ResultType> {
         error: boolean;
         errorCode: number;
@@ -30,37 +33,44 @@ export module MetadataBackup
         videos: VideoMetadata[],
         noRecord: string[]
     }
+}
 
-    export function BackupVideos(endpoint: string, videoIds: string[],
-                                 callback: (response: MetadataBackup.ExecutionResult<MetadataBackup.VideoAddResult>) => any)
+export class MetadataBackup {
+    public static EndPointDomain = "";
+    public static EndPointUrl = {
+        add: "/api/youtube/videos/add",
+        fetch: "/api/youtube/videos/get",
+        search: "/api/youtube/videos/get/all"
+    };
+
+    static BackupVideos(videoIds: string[],
+                                 callback: (response: ExecutionResult<VideoAddResult>) => unknown) : void
     {
-        let xhr = new XMLHttpRequest();
+        const endpoint = `${this.EndPointDomain}${this.EndPointUrl.add}`
+        const xhr = new XMLHttpRequest();
         xhr.open("POST", endpoint);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE)
-            {
-                let response = JSON.parse(xhr.responseText);
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                const response = JSON.parse(xhr.responseText);
                 callback(response as ExecutionResult<VideoAddResult>);
             }
         }
         xhr.send(JSON.stringify(videoIds));
     }
 
-    export function RetrieveListOfVideos(endpoint: string, videoIds: string[],
-                                         callback: (response: MetadataBackup.ExecutionResult<MetadataBackup.VideoListResult>) => any)
-    {
-        // if the last char of the end point is a slash, then we don't have to append one
-        let xhr = new XMLHttpRequest();
-        xhr.open("POST", endpoint);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE)
-            {
-                let response = JSON.parse(xhr.responseText);
-                callback(response as ExecutionResult<VideoListResult>);
-            }
-        }
-        xhr.send(JSON.stringify(videoIds));
+    static RetrieveListOfVideos(videoIds: string[],
+                                 callback: (response: ExecutionResult<VideoListResult>) => unknown): void {
+    const endpoint = `${this.EndPointDomain}${this.EndPointUrl.fetch}`
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+        const response = JSON.parse(xhr.responseText);
+        callback(response as ExecutionResult<VideoListResult>);
     }
+}
+xhr.send(JSON.stringify(videoIds));
+}
 }

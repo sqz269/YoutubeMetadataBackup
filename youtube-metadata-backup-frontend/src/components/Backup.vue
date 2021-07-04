@@ -1,162 +1,190 @@
 <template>
-    <div>
-        <main id="view-backup" class="px-3 mb-a-lot">
-            <h3>Backup Playlist</h3>
-            <hr class="my-4">
-            <p class="lead">Enter Playlist/Channel ID</p>
-            <div class="input-group input-group-lg sharp-corners mb-3">
-                <input v-model="inputId" id="backup-input" type="text" class="form-control text-input" placeholder="Playlist/Channel ID">
-                <div class="input-group-append">
-                    <button @click="backup" class="btn btn-lg btn-outline-secondary" type="button">Backup</button>
-                </div>
-            </div>
-            <div id="backup-status" class="d-flex align-items-center mt-4" :class="{'d-none': !showStatus}">
-                <p class="lead status-message" :class="{'text-danger': this.statusIsError}">
-                    {{ statusMessage }}
-                    <a class="text-link-simple" @click="showModal" :class="{'d-none': !this.showDetailsBtn}">Details</a>
-                </p>
-                <div class="ms-auto">
-                    <div class="spinner-border ms-auto" role="status" aria-hidden="true" :class="{'d-none': !processing}"></div>
-                </div>
-            </div>
-        </main>
-        <BackupResultModal v-bind:show-modal="this.showDetailsModal" v-bind:api-response="this.lastApiResp" @close="closeModal"></BackupResultModal>
-    </div>
+  <div>
+    <main id="view-backup" class="px-3 mb-a-lot">
+      <h3>Backup Playlist</h3>
+      <hr class="my-4">
+      <p class="lead">Enter Playlist/Channel ID</p>
+      <div class="input-group input-group-lg sharp-corners mb-3">
+        <input v-model="inputId" id="backup-input" type="text" class="form-control text-input" placeholder="Playlist/Channel ID">
+        <div class="input-group-append">
+          <button @click="backup" class="btn btn-lg btn-outline-secondary" type="button">Backup</button>
+        </div>
+      </div>
+      <StatusMessage ref="status"></StatusMessage>
+    </main>
+    <ChannelSelectModal ref="channelSelect"></ChannelSelectModal>
+    <BackupResultModel ref="backupResult"></BackupResultModel>
+  </div>
 </template>
 
-<script>
-import {Utils} from "@/assets/ts/Utils";
+<script lang="ts">
+import {Component, Vue} from "vue-property-decorator";
+import StatusMessage from "@/components/StatusMessage.vue";
+import {Utils, IdType} from "@/assets/ts/Utils";
 import {YoutubeDataAPIHandler} from "@/assets/ts/YoutubeDataAPIHandler";
 import {MetadataBackup} from "@/assets/ts/MetadataBackup";
-import BackupResultModal from "@/components/BackupResultModal";
+import ChannelSelectModal from "@/components/ChannelSelectModal.vue";
+import BackupResultModel from "@/components/BackupResultModel.vue";
 
-export default {
-    name: "Backup",
-    components: {
-        BackupResultModal
-    },
-    data: function() {
-        return {
-            inputId: "",
+@Component({
+  components: {BackupResultModel, ChannelSelectModal, StatusMessage}
+})
+export default class Backup extends Vue {
+  inputId = "";
 
-            showStatus: false,
-            processing: false,
-            statusMessage: "",
-            statusIsError: false,
-            showDetailsBtn: false,
-            showDetailsModal: false,
-            lastApiResp: false
-        }
-    },
-    methods: {
-        closeModal: function() {
-            this.showDetailsModal = false;
-        },
-        showModal: function() {
-            this.showDetailsModal = true;
-        },
-        setErrorStatus: function (errorMessage)
-        {
-            this.statusMessage = errorMessage;
-            this.statusIsError = true;
-            this.showStatus = true;
-            this.processing = false;
-            this.showDetailsBtn = false;
-        },
-        setCompleteMessage: function (message, showDetails=true)
-        {
-            this.statusMessage = message;
-            this.statusIsError = false;
-            this.showStatus = true;
-            this.processing = false;
-            this.showDetailsBtn = showDetails;
-        },
-        setProcessingStatus: function (message)
-        {
-            this.statusMessage = message;
-            this.statusIsError = false;
-            this.showStatus = true;
-            this.processing = true;
-            this.showDetailsBtn = false;
-        },
-        backup: function ()
-        {
-            let idType = Utils.DetermineIdType(this.inputId);
+  $refs!: {
+    status: StatusMessage,
+    channelSelect: ChannelSelectModal,
+    backupResult: BackupResultModel
+  }
 
-            switch (idType.type)
-            {
-                case Utils.IDType.Playlist:
-                    this.backupPlaylist(idType.id);
-                    break;
-                case Utils.IDType.Channel:
-                    this.backupChannel(idType.id);
-                    break;
-                case Utils.IDType.Video:
-                    this.setErrorStatus("ERROR: Per Video Backup is not supported, Please Enter a Playlist/Channel ID")
-                    break;
-                case Utils.IDType.Empty:
-                    this.setErrorStatus("ERROR: Please Enter a Playlist/Channel ID")
-                    break;
-                case Utils.IDType.Unknown:
-                    this.setErrorStatus("ERROR: Unrecognized ID. Did you enter a channel name rather than channel ID? (Channel ID should start with 'UC')")
-                    break;
-            }
-        },
-        backupPlaylist: function (playlistId) {
-            let backupVideosEndpoint = {endpoint: `${window.apiEndpointDomain}/api/youtube/videos/add`, method: "POST"};
-
-            this.setProcessingStatus("Please Wait ...")
-
-            if (!playlistId)
-            {
-                this.setErrorStatus("ERROR: Please Enter a playlist URL or ID")
-                return;
-            }
-
-            const that = this;
-            YoutubeDataAPIHandler.FetchPlaylistItems(playlistId, function (error, reason, items) {
-                if (error)
-                {
-                    that.setErrorStatus(`ERROR Fetching Playlist: ${reason}`);
-                    return;
-                }
-
-                let videoIds = [];
-                items.forEach(e => {
-                    videoIds.push(e.snippet.resourceId.videoId);
-                })
-
-                that.setProcessingStatus("Please wait warmly while the server is processing our request");
-
-                MetadataBackup.BackupVideos(backupVideosEndpoint.endpoint, videoIds, function (response) {
-                    if (response.error)
-                    {
-                        that.setErrorStatus(`ERROR: ${response.errorMessage}`);
-                    }
-                    else
-                    {
-                        that.lastApiResp = response;
-                        that.setCompleteMessage("Completed", true);
-                        that.showModal();
-                    }
-                })
-            }, function (fetched, total) {
-                that.setProcessingStatus(`Fetching Playlist Items. (${fetched}/${total})`);
-            });
-        },
-        backupChannel: function (channelId)
-        {
-            let that = this;
-            YoutubeDataAPIHandler.GetChannelUploadPlaylist(channelId, function (error, reason, data) {
-                if (error)
-                {
-                    that.setErrorStatus(`ERROR Getting Channel: ${reason}`)
-                    return;
-                }
-
-                that.backupPlaylist(data);
-            });
-        }
+  backup(): void {
+    const idType = Utils.DetermineIdType(this.inputId);
+    switch (idType.type) {
+      case IdType.Playlist:
+        // @ts-ignore
+        this.backupPlaylist(idType.id);
+        break;
+      case IdType.Channel:
+        // @ts-ignore
+        this.backupChannelForId(idType.id);
+        break;
+      case IdType.Username:
+        // @ts-ignore
+        this.backupChannelForUsername(idType.id);
+        break;
+      case IdType.Video:
+        // @ts-ignore
+        this.backupChannelFromVideo(idType.id);
+        break;
+      case IdType.VideoList:
+        this.$refs.status.Error("Video List is currently not supported by Backup. Please Enter a Channel or Playlist ID");
+        break;
+      case IdType.CustomUrl:
+        this.$refs.status.Error("Channel Custom URL is currently not supported. Please provide a video ID from the channel.");
+        break;
+      case IdType.Empty:
+      case IdType.Unknown:
+        this.$refs.status.Error("Invalid Input. Please Enter a Channel or Playlist ID");
+        break;
     }
+  }
+
+  backupVideoArray(videos: string[]): void {
+    this.$refs.status.Loading("Please wait warmly while the server is processing our request")
+
+    MetadataBackup.BackupVideos(videos, (response => {
+      if (response.error) {
+        this.$refs.status.Error(`Error backing up videos: ${response.errorMessage}`);
+        return;
+      }
+
+      this.$refs.status.Details("Backup Complete", () => {
+        this.$refs.backupResult.showModal();
+      });
+
+      this.$refs.backupResult.SetBackupResult(response);
+    }));
+  }
+
+  backupPlaylist(playlistId: string): void {
+    YoutubeDataAPIHandler.FetchPlaylistItems(playlistId,
+      ((error, errorReason, items) => {
+        if (error)
+        {
+          this.$refs.status.Error(`Error while Fetching Playlist: ${errorReason}`);
+          return;
+        }
+
+        const videoIds: string[] = [];
+        items.forEach(e => {
+          const videoId = e.snippet?.resourceId?.videoId;
+          if (videoId)
+            videoIds.push(videoId);
+        });
+
+        this.backupVideoArray(videoIds);
+      }),
+      ((fetched, total) => {
+        this.$refs.status.Loading(`Fetching Playlist Items: ${fetched}/${total}`);
+      })
+    )
+  }
+
+  backupChannelForId(channelId: string): void {
+    this.$refs.status.Loading("Getting Channel's Uploaded List");
+
+    YoutubeDataAPIHandler.GetChannelUploadPlaylist(channelId, ((error, errorReason, data) => {
+      if (error)
+      {
+        this.$refs.status.Error(`Error getting channel's upload playlist: ${errorReason}`);
+        return;
+      }
+
+      if (!data)
+      {
+        this.$refs.status.Error(`No Upload playlist returned for Channel`);
+        return;
+      }
+
+      this.backupPlaylist(data);
+    }));
+  }
+
+  backupChannelForUsername(channelUsername: string): void {
+    this.$refs.status.Loading("Getting list of channels from Username");
+
+    YoutubeDataAPIHandler.GetChannelDetailsFromUsername(channelUsername, ((error, errorReason, data) => {
+      if (error)
+      {
+        this.$refs.status.Error(`Error fetching channels from Username: ${errorReason}`);
+        return;
+      }
+
+      if (!data)
+      {
+        this.$refs.status.Error(`No channel with name: ${channelUsername} found`);
+        return;
+      }
+
+      // If there is only one channel with given username, auto select it for user
+      if (data.length === 1)
+      {
+        console.log(`Only one channel with username: ${channelUsername}. Auto selecting it`);
+        const uploadsPlaylist = data[0]?.contentDetails?.relatedPlaylists?.uploads;
+        if (!uploadsPlaylist)
+        {
+          this.$refs.status.Error(`Error: Unable to find Uploads Playlist for Channel: ${data[0].id}`);
+          return;
+        }
+
+        this.backupPlaylist(uploadsPlaylist);
+      }
+      // Multiple channels with the same name
+      else
+      {
+        // this.$refs.channelSelect.setChannelsToSelect(data);
+      }
+    }));
+  }
+
+  backupChannelFromVideo(videoId: string): void {
+    this.$refs.status.Loading("Retrieving Channel ID from Video");
+    YoutubeDataAPIHandler.GetChannelIdFromVideo(videoId, ((error, errorReason, data) => {
+      if (error)
+      {
+        this.$refs.status.Error(`Failed to retrieve video details: ${errorReason}`);
+        return;
+      }
+
+      if (!data)
+      {
+        this.$refs.status.Error(`No details retrieved for Video ID: ${videoId}. Is the Video ID Correct?`);
+        return;
+      }
+
+      this.backupChannelForId(data);
+    }))
+  }
 }
 </script>
