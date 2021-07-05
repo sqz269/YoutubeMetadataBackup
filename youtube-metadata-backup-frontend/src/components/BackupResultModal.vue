@@ -43,7 +43,7 @@ import VideoAddResult = MetadataBackup.Response.VideoAddResult;
 @Component({
   components: {VideoIdTable}
 })
-export default class BackupResultModel extends Vue {
+export default class BackupResultModal extends Vue {
   private show = false;
   private response: ExecutionResult<VideoAddResult> | null = null;
 

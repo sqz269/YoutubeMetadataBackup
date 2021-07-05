@@ -24,10 +24,10 @@ import {Utils, IdType} from "@/assets/ts/Utils";
 import {YoutubeDataAPIHandler} from "@/assets/ts/YoutubeDataAPIHandler";
 import {MetadataBackup} from "@/assets/ts/MetadataBackup";
 import ChannelSelectModal from "@/components/ChannelSelectModal.vue";
-import BackupResultModel from "@/components/BackupResultModel.vue";
+import BackupResultModal from "@/components/BackupResultModal.vue";
 
 @Component({
-  components: {BackupResultModel, ChannelSelectModal, StatusMessage}
+  components: {BackupResultModel: BackupResultModal, ChannelSelectModal, StatusMessage}
 })
 export default class Backup extends Vue {
   inputId = "";
@@ -35,7 +35,7 @@ export default class Backup extends Vue {
   $refs!: {
     status: StatusMessage,
     channelSelect: ChannelSelectModal,
-    backupResult: BackupResultModel
+    backupResult: BackupResultModal
   }
 
   backup(): void {
