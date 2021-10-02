@@ -16,7 +16,8 @@ Uses ASP.NET Core, MongoDB
             "VideoCollectionsName": <Collection Name that stores the data>,
             "ConnectionString": <MongoDb Connection String>,
             "DatabaseName": <Database name the collection belongs in>,
-            "QueryTimeoutMilliseconds":  <Timeout for database query (In Milliseconds)>
+            "QueryTimeoutMilliseconds":  <Timeout for database query (In Milliseconds)>,
+            "MaxQueryResult": <Max document returned in one search query>
         },
         "ServerYoutubeDataAPIKeys": [
             <Your Youtube Data API Key, For Retrieving Youtube Video Data>,
