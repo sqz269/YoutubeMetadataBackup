@@ -6,6 +6,7 @@
         public string ConnectionString { get; set; }
         public string DatabaseName { get; set; }
         public int QueryTimeoutMilliseconds { get; set; }
+        public long MaxQueryResult { get; set; }
     }
 
     public class IVideoDatabaseSettings
@@ -14,5 +15,6 @@
         public string ConnectionString { get; set; }
         public string DatabaseName { get; set; }
         public int QueryTimeoutMilliseconds { get; set; }
+        public long MaxQueryResult { get; set; }
     }
 }

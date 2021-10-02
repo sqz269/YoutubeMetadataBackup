@@ -14,6 +14,7 @@ namespace YoutubeMetadataBackup_backend.Services
     {
         private readonly IMongoCollection<Video> _videos;
         public readonly int QueryTimeout;
+        public readonly long MaxQueryResult;
 
         public VideoService(IVideoDatabaseSettings settings)
         {
@@ -22,6 +23,7 @@ namespace YoutubeMetadataBackup_backend.Services
 
             _videos = database.GetCollection<Video>(settings.VideoCollectionsName);
             QueryTimeout = settings.QueryTimeoutMilliseconds;
+            MaxQueryResult = settings.MaxQueryResult;
         }
 
         public List<Video> Get(string[] ids)
@@ -38,6 +40,14 @@ namespace YoutubeMetadataBackup_backend.Services
             }
         }
 
+        public List<Video> GetAll(FilterDefinition<Video> filter)
+        {
+            using (var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(QueryTimeout)))
+            {
+                return _videos.Find(filter).ToList(timeout.Token);
+            }
+        }
+
         public void Create(Video video)
         {
             _videos.InsertOne(video);
@@ -46,6 +56,14 @@ namespace YoutubeMetadataBackup_backend.Services
         public void Create(IEnumerable<Video> videos)
         {
             _videos.InsertMany(videos);
+        }
+
+        public long Count(FilterDefinition<Video> filter)
+        {
+            using (var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(QueryTimeout)))
+            {
+                return _videos.Find(filter).CountDocuments(timeout.Token);
+            }
         }
 
         public string[] GetNonExistingVideos(string[] videos)

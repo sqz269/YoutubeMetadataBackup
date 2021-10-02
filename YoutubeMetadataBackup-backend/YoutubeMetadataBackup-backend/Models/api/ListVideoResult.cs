@@ -8,4 +8,11 @@ namespace YoutubeMetadataBackup_backend.Models.api
         public IEnumerable<string> noRecord { get; set; }
 
     }
+
+    public class SearchCountResult
+    {
+        public long documents { get; set; }
+        public long responseLimit { get; set; }
+        public bool limitExceeded => documents > responseLimit;
+    }
 }

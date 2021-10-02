@@ -4,7 +4,8 @@
     {
         Success,
 
-        InvalidParamaters,
+        InvalidParameters,
+        TooManyItemRequested,
         OperationTimeout
     }
 
