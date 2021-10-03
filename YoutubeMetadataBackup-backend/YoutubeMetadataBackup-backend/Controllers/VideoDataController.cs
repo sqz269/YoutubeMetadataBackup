@@ -290,7 +290,10 @@ namespace YoutubeMetadataBackup_backend.Controllers
         public ExecutionResult<QueueVideoResult> Post([FromBody] string video)
         {
             if (!ValidationUtils.ValidateYoutubeVideoId(video))
+            {
+                Response.StatusCode = 400;
                 return ExecutionResult<QueueVideoResult>.Fail(ErrorCode.InvalidParameters, "Invalid VideoID");
+            }
 
             if (this._videoService.Exists(video))
                 return ExecutionResult<QueueVideoResult>.Success(
