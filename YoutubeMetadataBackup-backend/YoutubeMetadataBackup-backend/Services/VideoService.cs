@@ -53,9 +53,12 @@ namespace YoutubeMetadataBackup_backend.Services
             _videos.InsertOne(video);
         }
 
-        public void Create(IEnumerable<Video> videos)
+        public void Create(IEnumerable<Video> videos, bool ignoreError=false)
         {
-            _videos.InsertMany(videos);
+            _videos.InsertMany(videos, new InsertManyOptions
+            {
+                IsOrdered = !ignoreError
+            });
         }
 
         public long Count(FilterDefinition<Video> filter)

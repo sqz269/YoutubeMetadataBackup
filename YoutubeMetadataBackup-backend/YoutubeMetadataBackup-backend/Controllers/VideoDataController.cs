@@ -151,7 +151,7 @@ namespace YoutubeMetadataBackup_backend.Controllers
             }
 
             if (videos.Count != 0)
-                this._videoService.Create(videos);
+                this._videoService.Create(videos, true);
 
             return result;
         }
