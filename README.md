@@ -14,7 +14,7 @@ Please use the README.md files in Frontend and Backend directories for specific 
 [Backend](YoutubeMetadataBackup-backend/README.md) Instructions
 
 ## Inspiration
-Because Youtube Nuked a channel for copyright and half of my playlist is gone. :(
+Because Youtube Nuked a channel for copyright and ~~half~~ All of my playlist is gone. :(
 
 ## Existing Record
 You can open a github issue to request a database dump for all the existing records hosted on the demo site
