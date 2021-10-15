@@ -11,16 +11,17 @@
           <button @click="this.search" class="btn btn-lg btn-outline-secondary" type="button">Search</button>
         </div>
       </div>
-<!--      <div class="row">-->
-<!--        <div class="col-12">-->
-<!--          <a class="text-link-simple float-md-end" @click="showAdvancedSearchModal">-->
-<!--            Advanced Search-->
-<!--          </a>-->
-<!--        </div>-->
-<!--      </div>-->
+      <div class="row">
+        <div class="col-12">
+          <a class="text-link-simple float-md-end" @click="this.showAdvancedSearchModal">
+            Advanced Search
+          </a>
+        </div>
+      </div>
       <StatusMessage ref="status"></StatusMessage>
     </main>
     <SearchResultModal ref="searchResult"></SearchResultModal>
+    <AdvancedSearchModal ref="advancedSearch"></AdvancedSearchModal>
   </div>
 </template>
 
@@ -31,12 +32,14 @@ import SearchResultModal from "@/components/SearchResultModal.vue";
 import {MetadataBackup} from "@/assets/ts/MetadataBackup";
 import {IdType, Utils} from "@/assets/ts/Utils";
 import {YoutubeDataAPIHandler} from "@/assets/ts/YoutubeDataAPIHandler";
+import AdvancedSearchModal from "@/components/AdvancedSearchModal.vue";
 @Component({
-  components: {SearchResultModal, StatusMessage}
+  components: {AdvancedSearchModal, SearchResultModal, StatusMessage}
 })
 export default class Search extends Vue {
   $refs!: {
     searchResult: SearchResultModal
+    advancedSearch: AdvancedSearchModal,
     status: StatusMessage
   }
 
@@ -119,6 +122,10 @@ export default class Search extends Vue {
     ((fetched, total) => {
       this.$refs.status.Loading(`Fetching Playlist Items: ${fetched}/${total}`);
     }))
+  }
+
+  showAdvancedSearchModal(): void {
+    this.$refs.advancedSearch.showModal();
   }
 }
 </script>

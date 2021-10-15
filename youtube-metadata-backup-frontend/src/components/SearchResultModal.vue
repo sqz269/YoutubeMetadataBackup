@@ -125,7 +125,7 @@ export default class SearchResultModal extends Vue {
     });
 
     let csv = rows.join("\n");
-    Utils.ExportFile([csv], "export_data.csv", {type: "text/csv"});
+    Utils.ExportData([csv], "export_data.csv", {type: "text/csv"});
   }
   exportCsvNoRecord(): void {
     const rows = ["videoId"];
@@ -134,11 +134,11 @@ export default class SearchResultModal extends Vue {
 
     rows.push(...this.response?.noRecord);
     let csvData = rows.join("\r\n");
-    Utils.ExportFile([csvData], "export_no_record.csv", {type: "text/csv"});
+    Utils.ExportData([csvData], "export_no_record.csv", {type: "text/csv"});
   }
 
   exportAsJson(): void {
-    Utils.ExportFile([JSON.stringify(this.response)], "export.json", {type: "application/json"});
+    Utils.ExportData([JSON.stringify(this.response)], "export.json", {type: "application/json"});
   }
 }
 </script>

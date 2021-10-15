@@ -31,12 +31,16 @@ export module Utils {
         document.cookie = `${name}=${value}; expires=Fri, 31 Dec 2037 23:59:59 GMT`;
     }
 
-    export function ExportFile(content: BlobPart[], filename: string, type: {type: string}): void {
+    export function ExportData(content: BlobPart[], filename: string, type: {type: string}): void {
         const data = new Blob(content, type);
         const dataUrl = URL.createObjectURL(data);
 
+        DownloadUrl(dataUrl, filename);
+    }
+
+    export function DownloadUrl(url: string, filename: string): void {
         const link = document.createElement("a");
-        link.setAttribute("href", dataUrl);
+        link.setAttribute("href", url);
         link.setAttribute("download", filename);
         link.setAttribute("class", "d-none");
         document.body.appendChild(link); // Required for FF
@@ -46,6 +50,10 @@ export module Utils {
 
     export function UnixTimestampToDateString(timestamp: number): string {
         return new Date(timestamp * 1000).toLocaleDateString();
+    }
+
+    export function EscapeRegex(expr: string): string {
+        return expr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     export function DetermineIdType(data: string): { type: (IdType), id: (string | null | string[]) } {

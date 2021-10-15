@@ -13,7 +13,7 @@ Vue.use(IconsPlugin);
 Vue.config.productionTip = false
 
 // no trailing slashes, must contain scheme
-MetadataBackup.EndPointDomain = "http://localhost:44371/";
+MetadataBackup.EndPointDomain = "https://localhost:44371";
 
 new Vue({
   render: h => h(App),
