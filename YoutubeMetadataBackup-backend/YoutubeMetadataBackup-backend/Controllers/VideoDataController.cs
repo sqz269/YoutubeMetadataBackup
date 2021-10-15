@@ -158,6 +158,7 @@ namespace YoutubeMetadataBackup_backend.Controllers
 
 
         [HttpPost("get")]
+        [HttpGet("get")]
         public ExecutionResult<ListVideoResult> Get([FromBody]IEnumerable<string> videoId)
         {
             string[] videoIds = videoId as string[] ?? videoId.ToArray();

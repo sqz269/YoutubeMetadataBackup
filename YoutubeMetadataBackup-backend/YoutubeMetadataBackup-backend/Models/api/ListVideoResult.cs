@@ -6,7 +6,6 @@ namespace YoutubeMetadataBackup_backend.Models.api
     {
         public IEnumerable<Video> videos { get; set; }
         public IEnumerable<string> noRecord { get; set; }
-
     }
 
     public class SearchCountResult
