@@ -5,7 +5,6 @@ using YoutubeMetadataBackup_backend.Models.database;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.EntityFrameworkCore;
 
 
 namespace YoutubeMetadataBackup_backend.Services
@@ -48,11 +47,6 @@ namespace YoutubeMetadataBackup_backend.Services
             }
         }
 
-        public void Create(Video video)
-        {
-            _videos.InsertOne(video);
-        }
-
         public void Create(IEnumerable<Video> videos, bool ignoreError=false)
         {
             _videos.InsertMany(videos, new InsertManyOptions
@@ -76,20 +70,9 @@ namespace YoutubeMetadataBackup_backend.Services
             return videos.Except(existingVideos).ToArray();
         }
 
-        public bool Exists(Video vid)
-        {
-            return _videos.Find(video => video.Id == vid.Id).CountDocuments() > 0;
-        }
-
         public bool Exists(string videoId)
         {
             return _videos.Find(video => video.Id == videoId).CountDocuments() > 0;
-        }
-
-        public Video Update(string id, Video newVideo)
-        {
-            _videos.ReplaceOne(video => video.Id == id, newVideo);
-            return newVideo;
         }
     }
 }
