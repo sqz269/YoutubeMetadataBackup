@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoutubeMetadataBackup-backend", "YoutubeMetadataBackup-backend\YoutubeMetadataBackup-backend.csproj", "{A18151E2-62E9-41E6-9047-00F15A9AD0FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YoutubeMetadataBackup-backend", "YoutubeMetadataBackup-backend\YoutubeMetadataBackup-backend.csproj", "{A18151E2-62E9-41E6-9047-00F15A9AD0FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoutubeMetadataBackupDatabaseUpgrade", "YoutubeMetadataBackupDatabaseUpgrade\YoutubeMetadataBackupDatabaseUpgrade.csproj", "{B3D02E10-CE25-48F6-BF64-D61B63DEFF60}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{A18151E2-62E9-41E6-9047-00F15A9AD0FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A18151E2-62E9-41E6-9047-00F15A9AD0FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A18151E2-62E9-41E6-9047-00F15A9AD0FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3D02E10-CE25-48F6-BF64-D61B63DEFF60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3D02E10-CE25-48F6-BF64-D61B63DEFF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3D02E10-CE25-48F6-BF64-D61B63DEFF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3D02E10-CE25-48F6-BF64-D61B63DEFF60}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
