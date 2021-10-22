@@ -63,11 +63,27 @@ namespace YoutubeMetadataBackup_backend.Services
             }
         }
 
-        public string[] GetNonExistingVideos(string[] videos)
+        public (IEnumerable<string> existing, IEnumerable<string> missing) GetNonExistingVideos(string[] videos)
         {
+            
             var filter = new FilterDefinitionBuilder<Video>().In(v => v.Id, videos);
             var existingVideos = _videos.Find(filter).Project(video => video.Id).ToList();
-            return videos.Except(existingVideos).ToArray();
+            var missing = videos.Except(existingVideos).ToArray();
+            return (existingVideos, missing);
+        }
+
+        public void IncBackupCount(string videoId)
+        {
+            this.IncBackupCount(new []{videoId});
+        }
+
+        public void IncBackupCount(IEnumerable<string> videos)
+        {
+            //var query = Builders<Video>.Filter.Eq();
+            var filter = new FilterDefinitionBuilder<Video>().In(v => v.Id, videos);
+            var update = Builders<Video>.Update.Inc(nameof(Video.BackupCount), 1);
+
+            _videos.UpdateMany(filter, update);
         }
 
         public bool Exists(string videoId)

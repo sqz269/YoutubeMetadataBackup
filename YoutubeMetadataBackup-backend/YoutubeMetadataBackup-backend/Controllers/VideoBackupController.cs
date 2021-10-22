@@ -98,17 +98,18 @@ namespace YoutubeMetadataBackup_backend.Controllers
         {
             string[] videoIds = videoList as string[] ?? videoList.ToArray();
 
-            string[] videosMissing = _videoService.GetNonExistingVideos(videoIds);
+            var result = _videoService.GetNonExistingVideos(videoIds);
+            _videoService.IncBackupCount(result.existing);
 
-            BackupVideoResult result = this.BackupVideos(videosMissing);
+            BackupVideoResult backupResult = this.BackupVideos(result.missing);
 
             var response = new AddVideoResult
             {
                 TotalItemProcessed = videoIds.Length,
-                TotalNewItemsAdded = result.VideosAdded.Count,
-                TotalItemsFailedToAdd = result.VideosFailed.Count,
-                AddedVideoIds = result.VideosAdded,
-                FailedVideoIds = result.VideosFailed
+                TotalNewItemsAdded = backupResult.VideosAdded.Count,
+                TotalItemsFailedToAdd = backupResult.VideosFailed.Count,
+                AddedVideoIds = backupResult.VideosAdded,
+                FailedVideoIds = backupResult.VideosFailed
             };
 
             return ExecutionResult<AddVideoResult>.Success(response, 1);
@@ -124,8 +125,13 @@ namespace YoutubeMetadataBackup_backend.Controllers
             }
 
             if (this._videoService.Exists(video))
+            {
+                this._videoService.IncBackupCount(video);
+
                 return ExecutionResult<QueueVideoResult>.Success(
                     new QueueVideoResult(video, false, QueuedVideos.Count, false, true), 1);
+            }
+
 
             bool added = QueuedVideos.TryAdd(video, byte.MinValue);
 
