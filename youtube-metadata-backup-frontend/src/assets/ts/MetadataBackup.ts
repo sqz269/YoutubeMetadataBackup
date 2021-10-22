@@ -38,8 +38,8 @@ export namespace MetadataBackup.Response {
 export class MetadataBackup {
     public static EndPointDomain = "";
     public static EndPointUrl = {
-        add: "api/youtube/videos/backup",
-        search: "api/youtube/videos/data/search"
+        add: "/api/youtube/videos/backup/add",
+        search: "/api/youtube/videos/data/search"
     };
 
     static BackupVideos(videoIds: string[],
