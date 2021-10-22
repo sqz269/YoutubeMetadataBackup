@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
@@ -77,7 +76,7 @@ namespace YoutubeMetadataBackup_backend.Controllers
     {
         private readonly VideoService _videoService;
 
-        public VideoSearchController(IConfiguration config, VideoService videoService)
+        public VideoSearchController(VideoService videoService)
         {
             _videoService = videoService;
         }
