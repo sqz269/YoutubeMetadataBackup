@@ -5,7 +5,6 @@ using YoutubeMetadataBackup_backend.Models.database;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.EntityFrameworkCore;
 
 
 namespace YoutubeMetadataBackup_backend.Services
@@ -48,11 +47,6 @@ namespace YoutubeMetadataBackup_backend.Services
             }
         }
 
-        public void Create(Video video)
-        {
-            _videos.InsertOne(video);
-        }
-
         public void Create(IEnumerable<Video> videos, bool ignoreError=false)
         {
             _videos.InsertMany(videos, new InsertManyOptions
@@ -69,27 +63,32 @@ namespace YoutubeMetadataBackup_backend.Services
             }
         }
 
-        public string[] GetNonExistingVideos(string[] videos)
+        public (IEnumerable<string> existing, IEnumerable<string> missing) GetNonExistingVideos(string[] videos)
         {
+            
             var filter = new FilterDefinitionBuilder<Video>().In(v => v.Id, videos);
             var existingVideos = _videos.Find(filter).Project(video => video.Id).ToList();
-            return videos.Except(existingVideos).ToArray();
+            var missing = videos.Except(existingVideos).ToArray();
+            return (existingVideos, missing);
         }
 
-        public bool Exists(Video vid)
+        public void IncBackupCount(string videoId)
         {
-            return _videos.Find(video => video.Id == vid.Id).CountDocuments() > 0;
+            this.IncBackupCount(new []{videoId});
+        }
+
+        public void IncBackupCount(IEnumerable<string> videos)
+        {
+            //var query = Builders<Video>.Filter.Eq();
+            var filter = new FilterDefinitionBuilder<Video>().In(v => v.Id, videos);
+            var update = Builders<Video>.Update.Inc(nameof(Video.BackupCount), 1);
+
+            _videos.UpdateMany(filter, update);
         }
 
         public bool Exists(string videoId)
         {
             return _videos.Find(video => video.Id == videoId).CountDocuments() > 0;
-        }
-
-        public Video Update(string id, Video newVideo)
-        {
-            _videos.ReplaceOne(video => video.Id == id, newVideo);
-            return newVideo;
         }
     }
 }

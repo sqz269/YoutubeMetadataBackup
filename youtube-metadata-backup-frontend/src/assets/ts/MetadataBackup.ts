@@ -38,9 +38,9 @@ export namespace MetadataBackup.Response {
 export class MetadataBackup {
     public static EndPointDomain = "";
     public static EndPointUrl = {
-        add: "/api/youtube/videos/add",
-        fetch: "/api/youtube/videos/get",
-        search: "/api/youtube/videos/get/all"
+        add: "/api/youtube/videos/backup/add",
+        fetch: "/api/youtube/videos/data/get",
+        search: "/api/youtube/videos/data/search"
     };
 
     static BackupVideos(videoIds: string[],
@@ -60,17 +60,17 @@ export class MetadataBackup {
     }
 
     static RetrieveListOfVideos(videoIds: string[],
-                                 callback: (response: ExecutionResult<VideoListResult>) => unknown): void {
-    const endpoint = `${this.EndPointDomain}${this.EndPointUrl.fetch}`
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", endpoint);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onreadystatechange = function () {
-    if (xhr.readyState === XMLHttpRequest.DONE) {
-        const response = JSON.parse(xhr.responseText);
-        callback(response as ExecutionResult<VideoListResult>);
+                                callback: (response: ExecutionResult<VideoListResult>) => unknown): void {
+        const endpoint = `${this.EndPointDomain}${this.EndPointUrl.fetch}`
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", endpoint);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                const response = JSON.parse(xhr.responseText);
+                callback(response as ExecutionResult<VideoListResult>);
+            }
+        }
+        xhr.send(JSON.stringify(videoIds));
     }
-}
-xhr.send(JSON.stringify(videoIds));
-}
 }

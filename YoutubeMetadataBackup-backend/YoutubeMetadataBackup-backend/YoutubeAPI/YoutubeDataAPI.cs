@@ -52,7 +52,7 @@ namespace YoutubeMetadataBackup_backend.YoutubeAPI
                     : 0;
 
                 videos[index] = new Video(item.Id, item.Snippet.Title, item.Snippet.Description, publishedTime,
-                    item.Snippet.ChannelTitle, item.Snippet.ChannelId, true);
+                    item.Snippet.ChannelTitle, item.Snippet.ChannelId, true, 1);
 
                 index++;
             }

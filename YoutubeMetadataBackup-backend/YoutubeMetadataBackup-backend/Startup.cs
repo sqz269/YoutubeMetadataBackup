@@ -71,7 +71,7 @@ namespace YoutubeMetadataBackup_backend
 
             app.UseRouting();
 
-            app.UseCors();
+            app.UseCors("AllowAll");
 
             app.UseAuthorization();
 
