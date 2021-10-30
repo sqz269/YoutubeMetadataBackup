@@ -15,8 +15,9 @@ namespace YoutubeMetadataBackup_backend.Models.api
         public string Uploader { get; set; }
         public string UploaderId { get; set; }
         public bool Authentic { get; set; }
+        public int BackupCount { get; set; }
 
-        public Video(string id, string title, string description, long published, string uploader, string uploaderId, bool authentic)
+        public Video(string id, string title, string description, long published, string uploader, string uploaderId, bool authentic, int backupCount)
         {
             Id = id;
             Title = title;
@@ -25,6 +26,7 @@ namespace YoutubeMetadataBackup_backend.Models.api
             Uploader = uploader;
             UploaderId = uploaderId;
             Authentic = authentic;
+            BackupCount = backupCount;
         }
     }
 }
