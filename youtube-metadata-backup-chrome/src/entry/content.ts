@@ -29,10 +29,11 @@ interface PlaylistItem
     element: Element;
 }
 
-abstract class Controllers
+abstract class Controller
 {
     public abstract Activate(): void;
     public abstract Deactivate(): void;
+    public abstract IsActive(): boolean;
     public abstract GetType(): ControllerType;
 }
 
@@ -90,7 +91,7 @@ class Utils
         if (!channelName)
         {
             return {
-                title: videoTitle,
+                title: videoTitle.trim(),
                 videoId: videoId,
                 uploader: null,
                 uploaderUrl: null,
@@ -110,22 +111,79 @@ class Utils
         // GET UPLOADER METADATA END -----------------------------------------------------
 
         return {
-            title: videoTitle,
+            title: videoTitle.trim(),
             videoId: videoId,
-            uploader: channelName,
+            uploader: channelName.trim(),
             uploaderUrl: channelLink,
             element: metadata
         };
-    } 
+    }
+
+    public static SetPlaylistItemAttributes(playlistItem: PlaylistItem, title: string, uploader: string, uploaderUrl: string)
+    {
+        let element = playlistItem.element;
+        let titleAnchor = element.querySelector("[id='video-title']");
+        
+        // textContent prevent XSS?
+        titleAnchor!.textContent = title;
+
+        let channelNameBadge = element.querySelector("[id='channel-name']");
+
+        if (!channelNameBadge)
+            throw new Error("Could not find channel name badge");
+
+        let channelAnchor = channelNameBadge.getElementsByTagName("a")[0];
+        channelAnchor!.textContent = uploader;
+        channelAnchor!.setAttribute("href", uploaderUrl);
+    }
 }
 
-class MetadataPlaylistController extends Controllers {
+abstract class YTServiceRequestHandler extends Controller
+{
+    private listener: ((event: Event) => void) | null = null;
+
+    public abstract OnYTServiceRequestCompleted(e: Event): void;
+
+    protected BindYTServiceRequest()
+    {
+        console.log("Youtube Service Request Binded");
+        this.listener = this.OnYTServiceRequestCompleted.bind(this);
+        document.addEventListener("yt-service-request-completed", this.listener);
+    }
+
+    protected UnbindYTServiceRequest()
+    {
+        console.log("Youtube Service Request Unbinded");
+        if (this.listener)
+        {
+            document.removeEventListener("yt-service-request-completed", this.listener);
+            this.listener = null;    
+        }
+    }
+
+    public IsBinded(): boolean
+    {
+        return this.listener !== null;
+    }
+}
+
+class MetadataPlaylistController extends YTServiceRequestHandler {
     private _totalVideos: number = -1;
     private _playlistVisibility: Visibility = Visibility.Unknown;
-    private _playlistVideos: PlaylistItem[] = [];
+    private _playlistVideos: Map<string, PlaylistItem> = new Map<string, PlaylistItem>();
 
     public constructor() {
         super();
+        this.BindYTServiceRequest();
+    }
+
+    public OnYTServiceRequestCompleted(e: Event)
+    {
+        // @ts-ignore
+        if (e?.target?.tagName === "YTD-CONTINUATION-ITEM-RENDERER")
+        {
+            this.Update();
+        }
     }
 
     public GetTotalVideoInPlaylist(): number 
@@ -146,7 +204,6 @@ class MetadataPlaylistController extends Controllers {
         let privacyForm = document.getElementById("privacy-form");
         let label = privacyForm?.getElementsByTagName("label")[0];
         let privacySettings =  label?.innerHTML.trim();
-        console.log(privacySettings);
         switch (privacySettings) {
             case "Public":
                 return Visibility.Public;
@@ -169,21 +226,74 @@ class MetadataPlaylistController extends Controllers {
         return parsedItems;
     }
 
+    private UpdatePlaylistVideos(playlistVideos: PlaylistItem[])
+    {
+        let deleted = new Map<string, PlaylistItem>();
+        playlistVideos.forEach(e => {
+            if (!this._playlistVideos.has(e.videoId))
+            {
+                if (e.uploader === null)
+                {
+                    deleted.set(e.videoId, e);
+            }
+                this._playlistVideos.set(e.videoId, e);
+            }
+        });
+        console.log("New videos: " + deleted.size);
+        this.ProcessDeletedVideos(deleted);
+    }
+
+    private ProcessDeletedVideos(newVideos: Map<string, PlaylistItem>)
+    {
+        MetadataBackup.RetrieveListOfVideos(Array.from(newVideos.keys()), (error, reason, data) => {
+            // HTTP ERROR
+            if (error || data == null)
+            {
+                console.error(reason);
+                return;
+            }
+
+            // ENDPOINT ERROR
+            if (data.error)
+            {
+                console.error(data.errorMessage);
+                return;
+            }
+
+            data.response.videos.forEach(e => {
+                // @ts-ignore
+                Utils.SetPlaylistItemAttributes(newVideos.get(e.id), e.title, e.uploader, e.uploaderId);
+            });
+
+            data.response.noRecord.forEach(e => {
+                // @ts-ignore
+                Utils.SetPlaylistItemAttributes(newVideos.get(e), "[NO DATA]", "[NO DATA]", "");
+            });
+        });
+    }
+
     public Activate()
     {
         this.Update();
-        document.addEventListener("yt-service-request-completed", () => {this.Update()});
+        this.BindYTServiceRequest();
     }
 
     public Deactivate()
     {
-        document.removeEventListener("yt-service-request-completed", () => {this.Update()});
+        this.UnbindYTServiceRequest();
+    }
+
+    public IsActive(): boolean
+    {
+        return this.IsBinded();
     }
 
     public Update()
     {
-        console.log("Service Request Completed");
-        console.log(this.GetPlaylistItems());
+        this._playlistVisibility = this.GetPlaylistVisibility();
+        this._totalVideos = this.GetTotalVideoInPlaylist();
+        this.UpdatePlaylistVideos(this.GetPlaylistItems());
+        console.log(this._playlistVideos);
     }
 
     public GetType(): ControllerType
@@ -194,14 +304,14 @@ class MetadataPlaylistController extends Controllers {
 
 class ControllerManager
 {
-    private _controllers: Map<ControllerType, Controllers> = new Map<ControllerType, Controllers>();
+    private _controllers: Map<ControllerType, Controller> = new Map<ControllerType, Controller>();
 
     /**
      * Add a controller to the manager, if the controller already exists, an error will be thrown
      * @param controller instantiated controller object
      * @throws Error if the controller is already added
      */
-    public AddController(controller: Controllers)
+    public AddController(controller: Controller)
     {
         if (this._controllers.has(controller.GetType()))
         {
@@ -211,7 +321,7 @@ class ControllerManager
         this._controllers.set(controller.GetType(), controller);
     }
 
-    public GetController(type: ControllerType): Controllers | undefined
+    public GetController(type: ControllerType): Controller | undefined
     {
         return this._controllers.get(type);
     }
@@ -240,7 +350,7 @@ class ControllerManager
      * Deactive one controller, leaving rest of the controllers untouched
      * @param controllerType Controller type to deactivate
      */
-    public DeactiveController(controllerType: ControllerType)
+    public DeactivateController(controllerType: ControllerType)
     {
         this._controllers.forEach(controller => {
             if (controller.GetType() == controllerType) 
@@ -301,15 +411,14 @@ class YTMetadataCtrl {
     }
 
     public GetPageState(): Page { return this._pageState; }
-
     
     private constructor() 
     {
         this._controllerManager = ControllerManager.GetInstance();
         this._controllerManager.AddController(new MetadataPlaylistController());     
 
-        document.addEventListener("yt-navigate-finish", function() {
-            YTMetadataCtrl.GetInstance().UpdatePageState();
+        document.addEventListener("yt-navigate-finish", () => {
+            this.UpdatePageState();
         });
     }
     private static _instance: YTMetadataCtrl;
