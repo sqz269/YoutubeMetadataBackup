@@ -1,4 +1,4 @@
-import { MetadataBackup } from "./MetadataBackup";
+import { MetadataBackup } from "./lib/shared/MetadataBackup";
 
 enum Page {
     Other,
@@ -161,7 +161,7 @@ class Utils
     }
 }
 
-abstract class YTServiceRequestHandler extends Controller
+abstract class YTEventHandler extends Controller
 {
     private listener: ((event: Event) => void) | null = null;
 
@@ -173,9 +173,15 @@ abstract class YTServiceRequestHandler extends Controller
         });
     }
 
-    public abstract OnYTServiceRequestCompleted(e: Event): void;
+    public OnYTServiceRequestCompleted(e: Event): void
+    {
+        return;
+    }
 
-    public abstract OnNavigationCompleted(e: Event): void;
+    public OnNavigationCompleted(e: Event): void
+    {
+        return;
+    }
 
     protected BindYTServiceRequest()
     {
@@ -205,7 +211,7 @@ abstract class YTServiceRequestHandler extends Controller
     }
 }
 
-class PlaylistMetadataController extends YTServiceRequestHandler {
+class PlaylistMetadataController extends YTEventHandler {
     private _totalVideos: number = -1;
     private _playlistVisibility: Visibility = Visibility.Unknown;
     private _playlistVideos: Map<string, PlaylistItem> = new Map<string, PlaylistItem>();
