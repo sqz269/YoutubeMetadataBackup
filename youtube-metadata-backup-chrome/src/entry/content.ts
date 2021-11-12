@@ -1,4 +1,4 @@
-import { MetadataBackup } from "./lib/shared/MetadataBackup";
+import { MetadataBackup } from "./MetadataBackup";
 
 enum Page {
     Other,
