@@ -377,6 +377,66 @@ class PlaylistMetadataController extends YTEventHandler {
     }
 }
 
+class VideoMetadataController extends YTEventHandler {
+    private isActivated = false;
+    
+    public constructor() 
+    {
+        super();
+        this.BindYTServiceRequest();
+    }
+
+    public OnYTServiceRequestCompleted(e: Event) {}
+
+    public OnNavigationCompleted(e: Event)
+    {
+        if (Utils.GetPageState() === Page.Video)
+        {
+            if (!this.IsActive())
+            {
+                this.Activate();
+                this.Update();
+            }
+            else
+            {
+                this.Update();
+            }
+        }
+    }
+
+    public Activate()
+    {
+        this.isActivated = true;
+    }
+
+    public Deactivate()
+    {
+        this.isActivated = false;
+    }
+
+    public IsActive(): boolean
+    {
+        return this.isActivated;
+    }
+
+    public Update()
+    {
+        let videoId = new URL(document.location.toString()).searchParams.get("v");
+        console.log(videoId);
+        if (videoId)
+        {
+            MetadataBackup.BackupVideoQueue(videoId, (error, reason, data) => {
+                console.log(data);
+            })
+        }
+    }
+
+    public GetType(): ControllerType
+    {
+        return ControllerType.Video;
+    }
+}
+
 class ControllerManager
 {
     private _controllers: Map<ControllerType, Controller> = new Map<ControllerType, Controller>();
@@ -450,7 +510,6 @@ class ControllerManager
         });
     }
 
-
     private static _instance: ControllerManager;
     private constructor() {}
     public static GetInstance(): ControllerManager 
@@ -465,4 +524,5 @@ class ControllerManager
 window.onload = () => {
     let mgr = ControllerManager.GetInstance();
     mgr.AddController(new PlaylistMetadataController());
+    mgr.AddController(new VideoMetadataController());
 }

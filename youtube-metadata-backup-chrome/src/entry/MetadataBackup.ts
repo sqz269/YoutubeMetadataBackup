@@ -1,6 +1,7 @@
 import ExecutionResult = MetadataBackup.Response.ExecutionResult;
 import VideoAddResult = MetadataBackup.Response.VideoAddResult;
 import VideoListResult = MetadataBackup.Response.VideoListResult;
+import QueueVideoResult = MetadataBackup.Response.QueueVideoResult;
 
 export namespace MetadataBackup.Response {
     export interface ExecutionResult<ResultType> {
@@ -30,8 +31,16 @@ export namespace MetadataBackup.Response {
     }
 
     export interface VideoListResult {
-        videos: VideoMetadata[],
-        noRecord: string[]
+        videos: VideoMetadata[];
+        noRecord: string[];
+    }
+
+    export interface QueueVideoResult {
+        videoId: string;
+        queued : boolean;
+        totalQueued: number;
+        queueProcessed: boolean;
+        exists: boolean;
     }
 }
 
@@ -72,6 +81,14 @@ export class MetadataBackup {
     {
         const endpoint = `${this.EndPointDomain}${this.EndPointUrl.add}`
         this.FetchResource<VideoAddResult>(endpoint, JSON.stringify(videoIds), callback);
+    }
+
+    public static BackupVideoQueue(videoId: string,
+                        callback: (httpError: boolean, reason: (string | null),
+                            response: (ExecutionResult<QueueVideoResult> | null)) => unknown) : void
+    {
+        const endpoint = `${this.EndPointDomain}${this.EndPointUrl.queue}`;
+        this.FetchResource<QueueVideoResult>(endpoint, JSON.stringify(videoId), callback);
     }
 
     public static RetrieveListOfVideos(videoIds: string[],
