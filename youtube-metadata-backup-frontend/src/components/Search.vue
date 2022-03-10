@@ -106,7 +106,9 @@ export default class Search extends Vue {
       const videoIds: string[] = [];
       items.forEach(e => {
         // Only try to retrieve deleted videos
-        if (e.snippet?.description === "This video is unavailable.")
+        let unavailableVideoTitles: Set<string> = new Set<string>(["private video", "deleted video"])
+        let title = e.snippet?.title?.trim().toLowerCase();
+        if (unavailableVideoTitles.has(title))
         {
           let videoId = e.snippet?.resourceId?.videoId;
           if (videoId)
